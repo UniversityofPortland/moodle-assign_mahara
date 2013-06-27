@@ -28,7 +28,7 @@ install the [updated Mhara local plugin][1] on your installation. Must then inst
 2. Execute the following command:
 
 ```
-> git clone git@github.com:philcali/local-mahara.git {Moodle_Root}/local/mahara
+> git clone git@github.com:philcali/local-mahara.git {Moodle_Root}/mod/assign/submission/mahara
 ```
 
 The reaminder of the install is taken care of by Moodle by clicking on _Notifcations_.
