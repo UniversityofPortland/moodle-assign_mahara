@@ -545,7 +545,7 @@ class assign_submission_mahara extends assign_submission_plugin {
 
     return function($portfolio, $status = assign_submission_mahara::STATUS_SELECTED) use ($plugin, $submission) {
       $submitted = $plugin->get_portfolio_record($submission);
-      $different = $portfolio->id != $submitted->portfolio;
+      $different = ($submitted && $portfolio->id != $submitted->portfolio);
       $success = $plugin->add_update_portfolio_record($submission, $portfolio, $status);
       if ($success) {
         if ($submitted && $submitted->status == $plugin::STATUS_SUBMITTED && $different) {
