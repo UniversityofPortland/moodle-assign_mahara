@@ -6,6 +6,8 @@ $string['pluginname'] = 'Mahara portfolio';
 $string['typemahara'] = 'Mahara portfolio';
 
 // Settings
+$string['default'] = 'Enabled by default';
+$string['default_help'] = 'If set, this submission method will be enabled by default for all new assignments.';
 $string['enabled'] = 'Mahara portfolio';
 $string['enabled_help'] = 'If enabled, students can integrate with their Mahara portfolio';
 $string['site'] = 'Mahara site';

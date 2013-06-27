@@ -24,6 +24,14 @@ $get_hosts = function() {
   }
 };
 
+
+$settings->add(new admin_setting_configcheckbox(
+  'assignsubmission_mahara/default',
+  new lang_string('default', 'assignsubmission_mahara'),
+  new lang_string('default_help', 'assignsubmission_mahara'),
+  0
+));
+
 $hosts = $get_hosts();
 
 if (!empty($hosts)) {
