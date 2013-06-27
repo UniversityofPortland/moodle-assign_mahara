@@ -20,6 +20,7 @@ abstract class assign_mahara_events {
    *
    * @param stdClass $event {
    * - assign $assignment
+   * - stdClass $submission
    * - stdClass $grade
    * }
    * @return boolean
@@ -29,12 +30,7 @@ abstract class assign_mahara_events {
 
     $plugin = $event->assignment->get_submission_plugin_by_type('mahara');
     if ($plugin) {
-      $params = array(
-        'assignment' => $event->assignment->get_instance()->id,
-        'userid' => $event->grade->userid,
-      );
-
-      $submission = $DB->get_record('assign_submission', $params);
+      $submission = $event->submission;
       if ($submission) {
         $submitted = $plugin->get_portfolio_record($submission);
         if ($submitted && $submitted->status == $plugin::STATUS_SUBMITTED) {

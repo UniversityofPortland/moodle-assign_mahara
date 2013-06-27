@@ -96,17 +96,49 @@ class assign_submission_mahara extends assign_submission_plugin {
   }
 
   /**
+   * Retrieves all of the submitted postfolio submissions
+   *
+   * @param array $submissionids
+   * @return array
+   */
+  public function get_all_submitted(array $submissionids = null) {
+    global $DB;
+
+    $params = array(
+      'assignment' => $this->assignment->get_instance()->id,
+      'status' => self::STATUS_SUBMITTED,
+    );
+
+    if ($submissionids) {
+      $select = 'submission IN (' . implode(',', $submissionids) . ') '
+        . 'AND assignment = :assignment AND status = :status';
+      return $DB->get_records_select(self::VIEWS_TABLE, $select, $params);
+    } else {
+      return $DB->get_records(self::VIEWS_TABLE, $params);
+    }
+  }
+
+  /**
+   * Gets all submissions that are drafts and re-opens
+   *
+   * @return array
+   */
+  public function get_all_drafts_or_reopens() {
+    global $DB;
+
+    $select = 'assignment = :assignment AND (status = :status1 OR status = :status2)';
+    return $DB->get_records_select('assign_submission', $select, array(
+      'assignment' => $this->assignment->get_instance()->id,
+      'status1' => ASSIGN_SUBMISSION_STATUS_REOPENED,
+      'status2' => ASSIGN_SUBMISSION_STATUS_DRAFT,
+    ));
+  }
+
+  /**
    * Releases all of the portfolios that have been submitted
    */
   public function release_all_submitted() {
-    global $DB;
-
-    $submissions = $DB->get_records(self::VIEWS_TABLE, array(
-      'assignment' => $this->assignment->get_instance()->id,
-      'status' => self::STATUS_SUBMITTED,
-    ));
-
-    foreach ($submissions as $submission) {
+    foreach ($this->get_all_submitted() as $submission) {
       $this->release_submission($submission);
     }
   }
@@ -361,8 +393,7 @@ class assign_submission_mahara extends assign_submission_plugin {
       $form->addElement('radio', 'view', '', $anchor, $view['id']);
     }
 
-    if ($submission) {
-      $submitted = $this->get_portfolio_record($submission);
+    if ($submission && $submitted = $this->get_portfolio_record($submission)) {
       $this
         ->get_service()
         ->get_local_portfolio($submitted->portfolio)
@@ -467,10 +498,7 @@ class assign_submission_mahara extends assign_submission_plugin {
                         ->get_service()
                         ->add_update_portfolio($submission->userid, (object) $page);
                     })
-                  ->map(
-                    function($portfolio) use ($release_previous) {
-                      return $release_previous($portfolio);
-                    })
+                  ->map($release_previous)
                   ->getOrElse(false);
               }
             });
@@ -515,12 +543,12 @@ class assign_submission_mahara extends assign_submission_plugin {
   private function create_release_callback($submission) {
     $plugin = $this;
 
-    return function($portfolio, $status = self::STATUS_SELECTED) use ($plugin, $submission) {
+    return function($portfolio, $status = assign_submission_mahara::STATUS_SELECTED) use ($plugin, $submission) {
       $submitted = $plugin->get_portfolio_record($submission);
+      $different = $portfolio->id != $submitted->portfolio;
       $success = $plugin->add_update_portfolio_record($submission, $portfolio, $status);
       if ($success) {
-        $newly = $plugin->get_portfolio_record($submission);
-        if ($submitted && $submitted->status == $plugin::STATUS_SUBMITTED && $submitted->portfolio != $newly->portfolio) {
+        if ($submitted && $submitted->status == $plugin::STATUS_SUBMITTED && $different) {
           $plugin->release_submission($submitted, $submission->userid);
         }
       }
@@ -562,40 +590,6 @@ class assign_submission_mahara extends assign_submission_plugin {
   }
 
   /**
-   * @see parent
-   * @return boolean
-   */
-  public function precheck_submission($submission) {
-    global $DB;
-
-    $submitted = $this->get_portfolio_record($submission);
-
-    $sql = "
-      SELECT
-        COUNT(v.*)
-      FROM
-        {assign_submission} s,
-        {assign_mahara_submit_views} v
-      WHERE
-        s.id <> :subid
-        s.userid = :user_id AND
-        v.submission = s.submission AND
-        v.portfolio = :portfolio AND
-        v.status = :status";
-
-    $params = array(
-      'subid' => $submission->id,
-      'user_id' => $submission->userid,
-      'portfolio' => $submitted->portfolio,
-      'status' => self::STATUS_SUBMITTED,
-    );
-
-    // Ensure that there are no other submissions
-    // that are using this portfolio
-    return $DB->count_records_sql($sql, $params) === 0;
-  }
-
-  /**
    * This is only called when the teacher or admin requires it
    *
    * @see parent
@@ -606,7 +600,7 @@ class assign_submission_mahara extends assign_submission_plugin {
     $plugin = $this;
 
     $submitted = $this->get_portfolio_record($submission);
-    if ($submitted && $submitted->status != self::STATUS_SUBMITTED) {
+    if ($submitted) {
       $this
         ->get_service()
         ->get_local_portfolio($submitted->portfolio)
@@ -645,8 +639,60 @@ class assign_submission_mahara extends assign_submission_plugin {
   }
 
   /**
+   * This function solely exists to make sure re-opened
+   * submissions are properly released.
+   *
    * @see parent
    */
   public static function cron() {
+    global $DB, $CFG;
+
+    require_once "{$CFG->dirroot}/mod/assign/locallib.php";
+
+    $cache = array();
+    $retrieve_course = function($assign) use (&$cache) {
+      global $DB;
+
+      if (isset($cache[$assign->course])) {
+        return $cache[$assign->course];
+      } else {
+        $course = $DB->get_record('course', array('id' => $assign->course), '*', MUST_EXIST);
+        $cache[$assign->course] = $course;
+      }
+      return $cache[$assign->course];
+    };
+
+    $sql = "SELECT a.* FROM {assign} a, {assign_plugin_config} c "
+      . "WHERE a.id = c.assignment AND c.plugin = 'mahara' AND "
+      . "c.subtype = 'assignsubmission' AND "
+      . "c.name = 'enabled' AND c.value = 1";
+
+    $mahara_instances = $DB->get_records_sql($sql);
+    foreach ($mahara_instances as $instance) {
+      $cm = get_coursemodule_from_instance('assign', $instance->id, $instance->course, false, MUST_EXIST);
+      $context = context_module::instance($cm->id);
+
+      $assign = new assign($context, $cm, $retrieve_course($instance));
+      $mahara = $assign->get_submission_plugin_by_type('mahara');
+
+      $drafts_or_reopens = $mahara->get_all_drafts_or_reopens();
+      $submitted_portfolios = $mahara->get_all_submitted(array_keys($drafts_or_reopens));
+
+      foreach ($submitted_portfolios as $submitted) {
+        $submission = $drafts_or_reopens[$submitted->submission];
+        $submitted->status = $submission->status == ASSIGN_SUBMISSION_STATUS_REOPENED ?
+          self::STATUS_RELEASED :
+          self::STATUS_SELECTED;
+
+        $mahara
+          ->release_submission($submitted)
+          ->map(
+            function($option) use ($mahara, $submitted, $submission) {
+              $option->each(function($portfolio) use ($mahara, $submitted, $submission) {
+                $mahara->add_update_portfolio_record($submission, $portfolio, $submitted->status);
+              });
+            });
+      }
+    }
   }
 }

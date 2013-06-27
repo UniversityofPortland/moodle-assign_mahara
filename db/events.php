@@ -8,6 +8,9 @@ $mapper = function($event) {
   );
 };
 
-$events = array('mahara_portfolio_deleted');
+$events = array(
+  'mahara_portfolio_deleted',
+  'assign_mahara_grade_submitted',
+);
 
 $handlers = array_combine($events, array_map($mapper, $events));
