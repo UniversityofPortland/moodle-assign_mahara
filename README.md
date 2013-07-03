@@ -6,14 +6,14 @@ This repository houses an updated Mahara assignment submission plugin.
 
 - XML-RPC integration with a Mahara installation
 - Select portfolio
-- If multiple submissions are allow, it release a previously selected submission
+- If multiple submissions are allowed, it release a previously selected submission
 - Abides by Moodle assignments config options
 - Popup for quickly looking at submission (no windows... no tabs)
 
 ## Requirements
 
-- Moodle 2.2+
-- [Update Mahara local plugin][1]
+- Moodle 2.3+
+- [Updated Mahara local plugin][1]
 - [Mahara Feedback plugin][2] (Optional, but reccommended)
 
 ## Installation
@@ -28,10 +28,10 @@ install the [updated Mhara local plugin][1] on your installation. Must then inst
 2. Execute the following command:
 
 ```
-> git clone git@github.com:philcali/local-mahara.git {Moodle_Root}/mod/assign/submission/mahara
+> git clone git@github.com:philcali/assign-mahara.git {Moodle_Root}/mod/assign/submission/mahara
 ```
 
-The reaminder of the install is taken care of by Moodle by clicking on _Notifcations_.
+The remainder of the install is taken care of by Moodle by clicking on _Notifcations_.
 
 ## Feedback plugin
 

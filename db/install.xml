@@ -6,17 +6,17 @@
   <TABLES>
     <TABLE NAME="assign_mahara_submit_views" COMMENT="A table associating assignment submissions to Mahara portfolios">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="submission" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="portfolio" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="assignment"/>
+        <FIELD NAME="assignment" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" NEXT="submission" PREVIOUS="id"/>
+        <FIELD NAME="submission" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" NEXT="portfolio" PREVIOUS="assignment"/>
+        <FIELD NAME="portfolio" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" NEXT="status" PREVIOUS="submission"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" PREVIOUS="portfolio"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="assignassignment" TYPE="foreign" FIELDS="assignment" REFTABLE="assign" REFFIELDS="id"/>
-        <KEY NAME="assignportfolio" TYPE="foreign" FIELDS="portfolio" REFTABLE="maraha_portfolio" REFFIELDS="id"/>
-        <KEY NAME="assignsubmission" TYPE="foreign-unique" FIELDS="submission" REFTABLE="assign_submission" REFFIELDS="id"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="assignassignment"/>
+        <KEY NAME="assignassignment" TYPE="foreign" FIELDS="assignment" REFTABLE="assign" REFFIELDS="id" NEXT="assignportfolio" PREVIOUS="primary"/>
+        <KEY NAME="assignportfolio" TYPE="foreign" FIELDS="portfolio" REFTABLE="maraha_portfolio" REFFIELDS="id" NEXT="assignsubmission" PREVIOUS="assignassignment"/>
+        <KEY NAME="assignsubmission" TYPE="foreign-unique" FIELDS="submission" REFTABLE="assign_submission" REFFIELDS="id" PREVIOUS="assignportfolio"/>
       </KEYS>
     </TABLE>
   </TABLES>
