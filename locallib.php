@@ -291,6 +291,10 @@ class assign_submission_mahara extends assign_submission_plugin {
       $event->plugin = $this;
       events_trigger('assignsubmission_mahara_get_settings', $event);
     } else {
+      $pluginname = get_string('pluginname', 'assignsubmission_mahara');
+      $no_host = get_string('nomaharahostsfound', 'assignsubmission_mahara');
+
+      $form->addElement('static', 'mahara_warning', $pluginname, "<span class='error'>$no_host</span>");
       $form->removeElement('assignsubmission_mahara_enabled');
     }
   }
