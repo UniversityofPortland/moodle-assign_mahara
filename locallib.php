@@ -284,7 +284,12 @@ class assign_submission_mahara extends assign_submission_plugin {
       $form->addElement('select', 'mahara_host', get_string('site', 'assignsubmission_mahara'), $hosts);
       $form->addHelpButton('mahara_host', 'site', 'assignsubmission_mahara');
       $form->setDefault('mahara_host', isset($hosts[$hostId]) ? $hosts[$hostId] : key($hosts));
-      $form->disabledIf('mahara_host', 'assignsubmission_mahara_enabled');
+
+      if ($form->getElementType('assignsubmission_mahara_enabled') == 'checkbox') {
+        $form->disabledIf('mahara_host', 'assignsubmission_mahara_enabled');
+      } else {
+        $form->disabledIf('mahara_host', 'assignsubmission_mahara_enabled', 'eq', '0');
+      }
 
       $event = new stdClass;
       $event->form = $form;
