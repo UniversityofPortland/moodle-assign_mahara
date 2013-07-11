@@ -1,10 +1,17 @@
 (function() {
   var body = document.querySelector('body');
 
+  var resizeDialog = function(e) {
+    var dialog = document.querySelector('div.portfolio-dialog');
+    dialog.style.top = ((window.innerHeight - Math.min(480, window.innerHeight)) / 2) + window.pageYOffset + 'px';
+    dialog.style.left = ((window.innerWidth - Math.min(800, window.innerWidth)) / 2) + 'px';
+  };
+
   var removeElement = function() {
     body.style.overflow = '';
     body.removeChild(document.querySelector('div.overlay'));
     body.removeChild(document.querySelector('div.portfolio-dialog'));
+    window.removeEventListener('resize', resizeDialog);
   };
 
   document.addEventListener('keyup', function(e) {
@@ -15,8 +22,8 @@
     var overlay = document.createElement('div');
     overlay.setAttribute('class', 'overlay');
     overlay.style.zIndex = 10000;
-    overlay.style.width = (document.width) + 'px';
-    overlay.style.height = (document.height) + 'px';
+    overlay.style.width = (window.screen.width) + 'px';
+    overlay.style.height = (window.screen.height) + 'px';
     overlay.style.backgroundColor = '#000';
     overlay.style.position = 'absolute';
     overlay.style.top = '0px';
@@ -38,8 +45,8 @@
     dialog.setAttribute('class', 'portfolio-dialog');
     dialog.style.padding = '12px';
     dialog.style.position = 'absolute';
-    dialog.style.top = ((document.height - 504) / 2) + 'px';
-    dialog.style.left = ((document.width - 824) / 2) + 'px';
+    dialog.style.top = ((window.innerHeight - Math.min(480, window.innerHeight)) / 2) + window.pageYOffset + 'px';
+    dialog.style.left = ((window.innerWidth - Math.min(800, window.innerWidth)) / 2) + 'px';
     dialog.style.borderRadius = '5px';
     dialog.style.MozBorderRadius = '5px';
     dialog.style.width = '800px';
@@ -54,6 +61,8 @@
 
     dialog.appendChild(iframe);
     body.appendChild(dialog);
+    window.addEventListener('resize', resizeDialog);
+
     return dialog;
   };
 
@@ -67,6 +76,11 @@
       if (e.preventDefault) {
         e.preventDefault();
       }
+
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+
       return false;
     });
   }
