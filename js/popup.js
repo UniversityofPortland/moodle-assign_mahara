@@ -1,15 +1,41 @@
 (function() {
   var body = document.querySelector('body');
 
+  var usePageOrBody = function() {
+    var page = document.querySelector("#page");
+    if (typeof page === 'undefined') {
+      page = body;
+    } else {
+      var chosenWidth = Math.max(page.offsetWidth, body.offsetWidth);
+      var chosenHeight = Math.max(page.offsetHeight, body.offsetHeight);
+      page = {
+        offsetWidth: chosenWidth,
+        offsetHeight: chosenHeight,
+        offsetTop: page.offsetHeight == chosenHeight ? page.offsetTop: 0,
+        offsetLeft: page.offsetWidth == chosenWidth ? page.offsetLeft : 0
+      };
+    }
+
+    return page;
+  };
+
   var resizeDialog = function(e) {
     var dialog = document.querySelector('div.portfolio-dialog');
+    var overlay = document.querySelector('div.portfolio-overlay');
+    var page = usePageOrBody();
+
     dialog.style.top = ((window.innerHeight - Math.min(480, window.innerHeight)) / 2) + window.pageYOffset + 'px';
     dialog.style.left = ((window.innerWidth - Math.min(800, window.innerWidth)) / 2) + 'px';
+
+    overlay.style.width = (page.offsetWidth) + 'px';
+    overlay.style.height = (page.offsetHeight) + 'px';
+    overlay.style.top = page.offsetTop + 'px';
+    overlay.style.left = page.offsetLeft + 'px';
   };
 
   var removeElement = function() {
     body.style.overflow = '';
-    body.removeChild(document.querySelector('div.overlay'));
+    body.removeChild(document.querySelector('div.portfolio-overlay'));
     body.removeChild(document.querySelector('div.portfolio-dialog'));
     window.removeEventListener('resize', resizeDialog);
   };
@@ -19,20 +45,22 @@
   });
 
   var createOverlay = function() {
+    body.style.overflow = 'hidden';
+
+    var page = usePageOrBody();
     var overlay = document.createElement('div');
-    overlay.setAttribute('class', 'overlay');
+    overlay.setAttribute('class', 'portfolio-overlay');
     overlay.style.zIndex = 10000;
-    overlay.style.width = (window.screen.width) + 'px';
-    overlay.style.height = (window.screen.height) + 'px';
+    overlay.style.width = (page.offsetWidth) + 'px';
+    overlay.style.height = (page.offsetHeight) + 'px';
     overlay.style.backgroundColor = '#000';
     overlay.style.position = 'absolute';
-    overlay.style.top = '0px';
-    overlay.style.left = '0px';
+    overlay.style.top = page.offsetTop + 'px';
+    overlay.style.left = page.offsetLeft + 'px';
 
     overlay.style.opacity = 0.5;
     overlay.style.filter = 'alpha(opacity=50)';
 
-    body.style.overflow = 'hidden';
     body.appendChild(overlay);
     overlay.addEventListener('click', removeElement);
 
