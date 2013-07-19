@@ -2,21 +2,21 @@
 
 This repository houses an updated Mahara assignment submission plugin.
 
-Developed for the University of Portland by Philip Cali.
+Developed for the University of Portland by Philip Cali and Tony Box (box@up.edu).
 
 The original Moodle 1.9 version of these plugins were funded through a grant from the New Hampshire Department of Education to a collaborative group of the following New Hampshire school districts:
 
-    Exeter Region Cooperative
-    Windham
-    Oyster River
-    Farmington
-    Newmarket
-    Timberlane School District
+- Exeter Region Cooperative
+- Windham
+- Oyster River
+- Farmington
+- Newmarket
+- Timberlane School District
   
 The upgrade to Moodle 2.0 and 2.1 was written by Aaron Wells at Catalyst IT, and supported by:
 
-    NetSpot
-    Pukunui Technology
+- NetSpot
+- Pukunui Technology
 
 ## Features
 
