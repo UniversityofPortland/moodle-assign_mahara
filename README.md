@@ -13,6 +13,7 @@ This repository houses an updated Mahara assignment submission plugin.
 ## Requirements
 
 - Moodle 2.3+
+- [Fully integrated Moodle -> Mahara instances][3]
 - [Updated Mahara local plugin][1]
 - [Mahara Feedback plugin][2] (Optional, but reccommended)
 
@@ -39,7 +40,7 @@ The only reason the feedback plugin exists is for properly releasing graded subm
 
 [1]: https://github.com/fellowapeman/local-mahara
 [2]: https://github.com/fellowapeman/assign-mahara-feedback
-[3]: https://wiki.mahara.org/index.php/System_Administrator's_Guide/Moodle//Mahara_Integration/View_Submission#Moodle_.26_Mahara_plugins_for_Portfolio_assignment_submission
+[3]: http://manual.mahara.org/en/1.5/mahoodle/mahoodle.html
 
 ## License
 
