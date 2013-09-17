@@ -13,6 +13,7 @@ This repository houses an updated Mahara assignment submission plugin.
 ## Requirements
 
 - Moodle 2.3+
+- PHP 5.4+
 - [Fully integrated Moodle -> Mahara instances][3]
 - [Updated Mahara local plugin][1]
 - [Mahara Feedback plugin][2] (Optional, but reccommended)
