@@ -38,8 +38,8 @@ The remainder of the install is taken care of by Moodle by clicking on _Notifcat
 
 The only reason the feedback plugin exists is for properly releasing graded submissions and for Mahara outcomes. It's an optional install because it's technically not required for a fully functional Mahara assignment, but it's certainly reccommeded.
 
-[1]: https://github.com/fellowapeman/local-mahara
-[2]: https://github.com/fellowapeman/assign-mahara-feedback
+[1]: https://github.com/fellowapeman/moodle-local_mahara
+[2]: https://github.com/fellowapeman/moodle-assignfeedback_mahara
 [3]: http://manual.mahara.org/en/1.5/mahoodle/mahoodle.html
 
 ## License
