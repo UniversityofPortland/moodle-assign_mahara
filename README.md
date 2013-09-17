@@ -29,7 +29,7 @@ install the [updated Mahara local plugin][1] on your Moodle installation. Then, 
 2. Execute the following command:
 
 ```
-> git clone git@github.com:fellowapeman/assign-mahara.git {Moodle_Root}/mod/assign/submission/mahara
+> git clone git@github.com:fellowapeman/moodle-assign_mahara.git {Moodle_Root}/mod/assign/submission/mahara
 ```
 
 The remainder of the install is taken care of by Moodle by clicking on _Notifcations_.
