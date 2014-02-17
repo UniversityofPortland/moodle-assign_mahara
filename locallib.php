@@ -690,6 +690,10 @@ class assign_submission_mahara extends assign_submission_plugin {
       $submitted_portfolios = $mahara->get_all_submitted(array_keys($drafts_or_reopens));
 
       foreach ($submitted_portfolios as $submitted) {
+        if (!isset($drafts_or_reopens[$submitted->submission])) {
+            continue;
+        }
+
         $submission = $drafts_or_reopens[$submitted->submission];
         $submitted->status = $submission->status == ASSIGN_SUBMISSION_STATUS_REOPENED ?
           self::STATUS_RELEASED :
