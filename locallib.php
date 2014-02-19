@@ -680,33 +680,37 @@ class assign_submission_mahara extends assign_submission_plugin {
 
     $mahara_instances = $DB->get_records_sql($sql);
     foreach ($mahara_instances as $instance) {
-      $cm = get_coursemodule_from_instance('assign', $instance->id, $instance->course, false, MUST_EXIST);
-      $context = context_module::instance($cm->id);
+      try {
+        $cm = get_coursemodule_from_instance('assign', $instance->id, $instance->course, false, MUST_EXIST);
+        $context = context_module::instance($cm->id);
 
-      $assign = new assign($context, $cm, $retrieve_course($instance));
-      $mahara = $assign->get_submission_plugin_by_type('mahara');
+        $assign = new assign($context, $cm, $retrieve_course($instance));
+        $mahara = $assign->get_submission_plugin_by_type('mahara');
 
-      $drafts_or_reopens = $mahara->get_all_drafts_or_reopens();
-      $submitted_portfolios = $mahara->get_all_submitted(array_keys($drafts_or_reopens));
+        $drafts_or_reopens = $mahara->get_all_drafts_or_reopens();
+        $submitted_portfolios = $mahara->get_all_submitted(array_keys($drafts_or_reopens));
 
-      foreach ($submitted_portfolios as $submitted) {
-        if (!isset($drafts_or_reopens[$submitted->submission])) {
+        foreach ($submitted_portfolios as $submitted) {
+          if (!isset($drafts_or_reopens[$submitted->submission])) {
             continue;
-        }
+          }
 
-        $submission = $drafts_or_reopens[$submitted->submission];
-        $submitted->status = $submission->status == ASSIGN_SUBMISSION_STATUS_REOPENED ?
-          self::STATUS_RELEASED :
-          self::STATUS_SELECTED;
+          $submission = $drafts_or_reopens[$submitted->submission];
+          $submitted->status = $submission->status == ASSIGN_SUBMISSION_STATUS_REOPENED ?
+            self::STATUS_RELEASED :
+            self::STATUS_SELECTED;
 
-        $mahara
-          ->release_submission($submitted)
-          ->map(
-            function($option) use ($mahara, $submitted, $submission) {
-              $option->each(function($portfolio) use ($mahara, $submitted, $submission) {
-                $mahara->add_update_portfolio_record($submission, $portfolio, $submitted->status);
+          $mahara
+            ->release_submission($submitted)
+            ->map(
+              function($option) use ($mahara, $submitted, $submission) {
+                $option->each(function($portfolio) use ($mahara, $submitted, $submission) {
+                  $mahara->add_update_portfolio_record($submission, $portfolio, $submitted->status);
+                });
               });
-            });
+        }
+      } catch (Exception $e) {
+        mtrace("Failed to update Mahara submissions for course {$instance->course}, assign {$instance->id}: {$e->getMessage()}");
       }
     }
   }
