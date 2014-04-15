@@ -45,4 +45,11 @@ if (!empty($hosts)) {
     !empty($hosts) ? key($hosts) : '',
     $hosts ?: array()
   ));
+
+  $settings->add(new admin_setting_configcheckbox(
+    'assignsubmission_mahara/lock',
+    new lang_string('lock', 'assignsubmission_mahara'),
+    new lang_string('lock_help', 'assignsubmission_mahara'),
+    1
+  ));
 }

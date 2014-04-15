@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 $plugin->cron = 60;
-$plugin->version = 2013061200;
+$plugin->version = 20140412000;
 $plugin->requires = 2012062500;
-$plugin->release = '1.0rc (Build: 2013061200)';
-$plugin->maturity = MATURITY_RC;
+$plugin->release = '1.0 (Build: 20140412000)';
+$plugin->maturity = MATURITY_STABLE;
 $plugin->component = 'assignsubmission_mahara';
 
 $plugin->dependencies = array(
