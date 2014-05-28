@@ -12,6 +12,8 @@ $string['enabled'] = 'Mahara portfolio';
 $string['enabled_help'] = 'If enabled, students can integrate with their Mahara portfolio';
 $string['site'] = 'Mahara site';
 $string['site_help'] = 'This setting lets you select which Mahara site your students should submit their pages from. (The Mahara site must already be configured for mnet networking with this Moodle site.)';
+$string['lock'] = 'Lock portfolio';
+$string['lock_help'] = 'If set, the default behavior of Mahara submissions is to lock the portfolio in Mahara.';
 
 // Error
 $string['err_save_setting'] = 'Failed to save Mahara site setting. Please try again.';

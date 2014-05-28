@@ -278,17 +278,28 @@ class assign_submission_mahara extends assign_submission_plugin {
       $this->get_config('mahara_host') ?:
       get_config('assignsubmission_mahara', 'host');
 
+    $locked =
+      $this->get_config('mahara_lock') === false ?
+      get_config('assignsubmission_mahara', 'lock') :
+      $this->get_config('mahara_lock');
+
     $hosts = $this->get_hosts();
 
     if ($hosts) {
       $form->addElement('select', 'mahara_host', get_string('site', 'assignsubmission_mahara'), $hosts);
       $form->addHelpButton('mahara_host', 'site', 'assignsubmission_mahara');
+      $form->addElement('select', 'mahara_lock', new lang_string('lock', 'assignsubmission_mahara'), array(0 => new lang_string('no'), 1 => new lang_string('yes')));
+      $form->addHelpButton('mahara_lock', 'lock', 'assignsubmission_mahara');
+
       $form->setDefault('mahara_host', isset($hosts[$hostId]) ? $hosts[$hostId] : key($hosts));
+      $form->setDefault('mahara_lock', $locked);
 
       if ($form->getElementType('assignsubmission_mahara_enabled') == 'selectyesno') {
         $form->disabledIf('mahara_host', 'assignsubmission_mahara_enabled', 'eq', '0');
+        $form->disabledIf('mahara_lock', 'assignsubmission_mahara_enabled', 'eq', '0');
       } else {
         $form->disabledIf('mahara_host', 'assignsubmission_mahara_enabled');
+        $form->disabledIf('mahara_lock', 'assignsubmission_mahara_enabled');
       }
 
       $event = new stdClass;
@@ -320,6 +331,7 @@ class assign_submission_mahara extends assign_submission_plugin {
     }
 
     $this->set_config('mahara_host', $formdata->mahara_host);
+    $this->set_config('mahara_lock', $formdata->mahara_lock);
 
     events_trigger('assignsubmission_mahara_save_settings', $formdata);
 
@@ -477,46 +489,28 @@ class assign_submission_mahara extends assign_submission_plugin {
 
     if ($this->assignment->get_instance()->submissiondrafts) {
       // Check local user portfolio repo, before hitting mahara again
-      $local_portfolio = $this->get_service()->get_users_portfolios($submission->userid);
-      foreach ($local_portfolio as $portfolio) {
-        if ($portfolio->page == $data->view) {
-          break;
-        }
-      }
+      $portfolio = $this->get_service()->get_users_portfolio($submission->userid, $data->view);
+      $save_local = $this->create_save_local_callback($submission->userid, $data->view);
 
-      // We have a local one, update only
-      if (isset($portfolio)) {
-        return $release_previous($portfolio);
-      } else {
-        // We have to hit mahara to get chosen portfolio info
-        return $this
-          ->get_service()
-          ->request_pages_for_user($submission->userid)
-          ->fold(
-            array($this, 'on_error_handler'),
-            function($response) use ($plugin, $submission, $data) {
-              foreach ($response['data'] as $page) {
-                if ($page['id'] == $data->view){
-                  break;
-                }
-
-                return $plugin
-                  ->get_service()
-                  ->get_portfolio($submission->userid, $data->view)
-                  ->orElse(
-                    function() use ($plugin, $submission, $page) {
-                      return $plugin
-                        ->get_service()
-                        ->add_update_portfolio($submission->userid, (object) $page);
-                    })
+      // Hit local, or hit remote, and save
+      return $portfolio
+        ->map($release_previous)
+        ->orElse(function() use ($plugin, $submission, $save_local, $release_previous) {
+          return $plugin
+            ->get_service()
+            ->request_pages_for_user($submission->userid)
+            ->fold(
+              array($this, 'on_error_handler'),
+              function($response) use ($plugin, $save_local, $release_previous) {
+                return $save_local($response)
                   ->map($release_previous)
                   ->getOrElse(false);
-              }
-            });
-      }
+              });
+        })
+        ->get();
     } else {
       return $this
-        ->lock_portfolio($submission, $data->view)
+        ->save_submitted_portfolio($submission, $data->view)
         ->fold(
           array($this, 'on_error_handler'),
           function($success) { return $success; });
@@ -566,7 +560,33 @@ class assign_submission_mahara extends assign_submission_plugin {
 
       return $success;
     };
+  }
 
+  /**
+   * Creates a callback used for saving a selected portfolio locally
+   *
+   * @param int $userid
+   * @param int $viewid
+   * @return callback
+   */
+  private function create_save_local_callback($userid, $viewid) {
+    $plugin = $this;
+    return function($response) use ($plugin, $userid, $viewid) {
+      foreach ($response['data'] as $page) {
+        if ($page['id'] == $viewid) {
+          break;
+        }
+      }
+      return $plugin
+        ->get_service()
+        ->get_portfolio($viewid)
+        ->orElse(
+          function() use ($plugin, $userid, $page) {
+            return $plugin
+              ->get_service()
+              ->add_update_portfolio($userid, (object) $page);
+          });
+    };
   }
 
   /**
@@ -576,28 +596,43 @@ class assign_submission_mahara extends assign_submission_plugin {
    * @param int $viewid
    * @return Model_Either
    */
-  public function lock_portfolio($submission, $viewid) {
+  public function save_submitted_portfolio($submission, $viewid) {
     $plugin = $this;
     $release_previous = $this->create_release_callback($submission);
+    $save_local = $this->create_save_local_callback($submission->userid, $viewid);
+    $post_save = function($portfolio) use ($plugin, $release_previous) {
+      $success = $release_previous($portfolio, $plugin::STATUS_SUBMITTED);
 
-    return $this
-      ->get_service()
-      ->request_submit_page_for_user($submission->userid, $viewid)
-      ->withRight()
-      ->map(
-        function($portfolio) use ($plugin, $release_previous) {
-          $success = $release_previous($portfolio, $plugin::STATUS_SUBMITTED);
+      // Allow plugins to handle insert / updates (outcomes, etc)
+      if ($success) {
+        $eventdata = new stdClass;
+        $eventdata->portfolio = $portfolio;
 
-          // Allow plugins to handle insert / updates (outcomes, etc)
-          if ($success) {
-            $eventdata = new stdClass;
-            $eventdata->portfolio = $portfolio;
+        events_trigger('assignsubmission_mahara_submitted_portfolio', $eventdata);
+      }
 
-            events_trigger('assignsubmission_mahara_submitted_portfolio', $eventdata);
-          }
+      return $success;
+    };
 
-          return $success;
-        });
+    if ($this->get_config('mahara_lock')) {
+      return $this
+        ->get_service()
+        ->request_submit_page_for_user($submission->userid, $viewid)
+        ->withRight()
+        ->map($post_save);
+    } else {
+      try {
+        return $this
+          ->get_service()
+          ->request_pages_for_user($submission->userid)
+          ->withRight()
+          ->map($save_local)
+          ->flatMap($post_save);
+      } catch (Exception $e) {
+        echo $e->getTraceAsString();
+        die;
+      }
+    }
   }
 
   /**
@@ -618,7 +653,7 @@ class assign_submission_mahara extends assign_submission_plugin {
         ->each(
           function($portfolio) use ($plugin, $submission) {
             $plugin
-              ->lock_portfolio($submission, $portfolio->page)
+              ->save_submitted_portfolio($submission, $portfolio->page)
               ->withLeft()
               ->map(
                 function($errors) use ($plugin) {
@@ -679,6 +714,7 @@ class assign_submission_mahara extends assign_submission_plugin {
       . "c.name = 'enabled' AND c.value = 1";
 
     $mahara_instances = $DB->get_records_sql($sql);
+    mtrace('Found ' . count($mahara_instances) . " mahara assignments to process...\n");
     foreach ($mahara_instances as $instance) {
       try {
         $cm = get_coursemodule_from_instance('assign', $instance->id, $instance->course, false, MUST_EXIST);
@@ -702,15 +738,12 @@ class assign_submission_mahara extends assign_submission_plugin {
 
           $mahara
             ->release_submission($submitted)
-            ->map(
-              function($option) use ($mahara, $submitted, $submission) {
-                $option->each(function($portfolio) use ($mahara, $submitted, $submission) {
-                  $mahara->add_update_portfolio_record($submission, $portfolio, $submitted->status);
-                });
-              });
+            ->flatMap(function($portfolio) use ($mahara, $submitted, $submission) {
+              $mahara->add_update_portfolio_record($submission, $portfolio, $submitted->status);
+            });
         }
       } catch (Exception $e) {
-        mtrace("Failed to update Mahara submissions for course {$instance->course}, assign {$instance->id}: {$e->getMessage()}");
+        mtrace("Failed to update Mahara submissions for course {$instance->course}, assign {$instance->id}: {$e->getMessage()}\n");
       }
     }
   }
