@@ -614,25 +614,18 @@ class assign_submission_mahara extends assign_submission_plugin {
       return $success;
     };
 
-    if ($this->get_config('mahara_lock')) {
-      return $this
-        ->get_service()
-        ->request_submit_page_for_user($submission->userid, $viewid)
-        ->withRight()
-        ->map($post_save);
-    } else {
-      try {
-        return $this
-          ->get_service()
-          ->request_pages_for_user($submission->userid)
-          ->withRight()
-          ->map($save_local)
-          ->flatMap($post_save);
-      } catch (Exception $e) {
-        echo $e->getTraceAsString();
-        die;
-      }
-    }
+    return $this
+      ->get_service()
+      ->request_submit_page_for_user($submission->userid, $viewid)
+      ->withRight()
+      ->map($post_save)
+      ->map(function($success) use ($plugin, $submission) {
+        if (!$plugin->get_config('mahara_lock')) {
+          $submitted = $plugin->get_portfolio_record($submission);
+          $plugin->release_submission($submitted, $submission->userid);
+        }
+        return $success;
+      });
   }
 
   /**
