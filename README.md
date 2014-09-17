@@ -30,7 +30,7 @@ install the [updated Mahara local plugin][1] on your Moodle installation. Then, 
 2. Execute the following command:
 
 ```
-> git clone git@github.com:fellowapeman/moodle-assign_mahara.git {Moodle_Root}/mod/assign/submission/mahara
+> git clone https://github.com/UniversityofPortland/moodle-assign_mahara.git {Moodle_Root}/mod/assign/submission/mahara
 ```
 
 The remainder of the install is taken care of by Moodle by clicking on _Notifcations_.
@@ -39,8 +39,8 @@ The remainder of the install is taken care of by Moodle by clicking on _Notifcat
 
 The only reason the feedback plugin exists is for properly releasing graded submissions and for Mahara outcomes. It's an optional install because it's technically not required for a fully functional Mahara assignment, but it's certainly reccommeded.
 
-[1]: https://github.com/fellowapeman/moodle-local_mahara
-[2]: https://github.com/fellowapeman/moodle-assignfeedback_mahara
+[1]: https://github.com/UniversityofPortland/moodle-local_mahara
+[2]: https://github.com/UniversityofPortland/moodle-assignfeedback_mahara
 [3]: http://manual.mahara.org/en/1.5/mahoodle/mahoodle.html
 
 ## License
