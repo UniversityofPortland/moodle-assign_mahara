@@ -305,9 +305,7 @@ class assign_submission_mahara extends assign_submission_plugin {
       $event = new stdClass;
       $event->form = $form;
       $event->plugin = $this;
-      $event->name = 'assignsubmission_mahara_get_settings';
-      $event->trigger();
-      //deprecated: events_trigger('assignsubmission_mahara_get_settings', $event);
+      events_trigger('assignsubmission_mahara_get_settings', $event);
     } else {
       $pluginname = get_string('pluginname', 'assignsubmission_mahara');
       $no_host = get_string('nomaharahostsfound', 'assignsubmission_mahara');
@@ -335,9 +333,7 @@ class assign_submission_mahara extends assign_submission_plugin {
     $this->set_config('mahara_host', $formdata->mahara_host);
     $this->set_config('mahara_lock', $formdata->mahara_lock);
 
-    $formdata->name = 'assignsubmission_mahara_save_settings';
-    $formdata->trigger();
-    //deprecated: events_trigger('assignsubmission_mahara_save_settings', $formdata);
+    events_trigger('assignsubmission_mahara_save_settings', $formdata);
 
     return true;
   }
